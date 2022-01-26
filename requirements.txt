@@ -1,0 +1,17 @@
+numpy==1.20.2
+pandas==1.2.4
+nltk==3.6.1
+scipy==1.6.2
+matplotlib==3.4.1
+scikit-learn==0.24.1
+Flask==1.1.2
+flasgger
+
+dvc==2.1.0
+dvc[gdrive]
+mllint
+codecarbon==1.2.0
+
+click==8.0.3
+
+tabulate

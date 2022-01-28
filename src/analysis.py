@@ -1,7 +1,6 @@
 import csv
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib
 from scipy import stats
@@ -153,30 +152,68 @@ def small_multi(ds3_1, ds3_2, algo=None):
 
 
 def spearman_table_rq2(ds3_1, ds3_2, algo=None):
-    # draw small multiples
     if algo is None:
         algo = ds3_1.algorithm.unique()
-#     # draw no_datapoints and train_energy(J)
     
     rows = [['Algorithm', 'Column', 'Spearman', 'p-value']]
     for i in range(len(algo)):
         dsi = ds3_1[ds3_1['algorithm'] == algo[i]]
-
-        print(ds3_1.head())
     
-        correlation, pvalue = stats.spearmanr(dsi['f1'], dsi['no_datapoints'])
+        correlation, pvalue = stats.spearmanr(dsi['train_energy(J)'], dsi['no_datapoints'])
         row = [algo[i], 'no_datapoints', correlation, pvalue]    
         print(row)
         rows.append(row)
 
     for i in range(len(algo)):
         dsi = ds3_2[ds3_2['algorithm'] == algo[i]]
-        correlation, pvalue = stats.spearmanr(dsi['f1'], dsi['no_features'])
+        correlation, pvalue = stats.spearmanr(dsi['train_energy(J)'], dsi['no_features'])
         row = [algo[i], 'no_features', correlation, pvalue]    
         print(row)
         rows.append(row)
     print(tabulate(rows, headers='firstrow'))
     print(tabulate(rows, headers='firstrow', tablefmt='latex'))
+    
+
+def spearman_table_rq3(data, algo=None):
+    if algo is None:
+        algo = data.algorithm.unique()
+    
+    data_rq21 = data[data.RQ == 2.1]
+    data_rq22 = data[data.RQ == 2.2]
+
+    rows = [['Algorithm', 'Indep. Variable', 'Spearman', 'p-value']]
+
+    for i in range(len(algo)):
+        dsi = data_rq21[data_rq21['algorithm'] == algo[i]]
+    
+        result = pd.DataFrame()
+        for experiment_id in dsi['experiment_id'].unique():
+            group = dsi[dsi['experiment_id']== experiment_id]
+            new_row = group[group['train_energy(J)'] == group['train_energy(J)'].quantile(0.5, interpolation='nearest')]
+            result = result.append(new_row)
+
+        correlation, pvalue = stats.spearmanr(result['f1'], result['no_datapoints'])
+        row = [algo[i], 'no_datapoints', correlation, pvalue]    
+        print(row)
+        rows.append(row)
+    
+    for i in range(len(algo)):
+        dsi = data_rq22[data_rq22['algorithm'] == algo[i]]
+        
+        result = pd.DataFrame()
+        for experiment_id in dsi['experiment_id'].unique():
+            group = dsi[dsi['experiment_id']== experiment_id]
+            new_row = group[group['train_energy(J)'] == group['train_energy(J)'].quantile(0.5, interpolation='nearest')]
+            result = result.append(new_row)
+
+        correlation, pvalue = stats.spearmanr(result['f1'], result['no_features'])
+        row = [algo[i], 'no_features', correlation, pvalue]    
+        print(row)
+        rows.append(row)
+
+    print(tabulate(rows, headers='firstrow'))
+    print("Correlation between F1-score and independent variables.")
+    print(tabulate(rows, headers='firstrow', tablefmt='latex', floatfmt=".3f"))
     
 def rq1(data, algo):
     color = ['mediumvioletred', 'skyblue','limegreen','orange','olive','red','gray']
@@ -222,6 +259,15 @@ def rq1(data, algo):
     plt.tight_layout()
     plt.savefig("rq1.pdf")
 
+def overhead_analysis(data):
+    df = pd.DataFrame()
+    for experiment_id in data['experiment_id'].unique():
+        group = data[data['experiment_id']== experiment_id]
+        new_row = group[group['train_energy(J)'] == group['train_energy(J)'].quantile(0.5, interpolation='nearest')]
+        df = df.append(new_row)
+    df['overhead'] = df.apply(lambda row: row["preprocessing_energy(J)"]/row["train_energy(J)"], axis=1)
+    
+
 def main():
     # header, results = load_results()
 
@@ -243,11 +289,11 @@ def main():
     #groups = remove_outliers(data)
     # test_normality(groups)
     
-    ds1 = data[['algorithm','experiment_id','RQ','iteration','no_datapoints','no_features','datatype','f1']]
+    ds1 = data[['algorithm','experiment_id','RQ','iteration','no_datapoints','no_features','datatype','train_energy(J)']]
     ds1_1 = ds1[ds1.RQ == 2.1]
     ds1_2 = ds1[ds1.RQ == 2.2]
-    ds3_1 = ds1_1[['algorithm','no_datapoints','f1']]
-    ds3_2 = ds1_2[['algorithm','no_features','f1']]
+    ds3_1 = ds1_1[['algorithm','no_datapoints','train_energy(J)']]
+    ds3_2 = ds1_2[['algorithm','no_features','train_energy(J)']]
     
     rq1(data, algo=classifiers)
     
@@ -255,20 +301,10 @@ def main():
     small_multi(ds3_1, ds3_2, algo=classifiers)
     energy_precision(data, algo=classifiers)
     spearman_table_rq2(ds3_1, ds3_2, algo=classifiers)
+    spearman_table_rq3(data, algo=classifiers)
     
+    overhead_analysis(data)
     
-    
-    #####
-    ax = sns.violinplot(x="experiment_id", y="f1", hue="algorithm",
-                        data=data[(data['algorithm'] == "Bagging Classifier")], palette="muted")
-    #plt.show()
-    plt.savefig('vioplot.png')
-    # print(data.T)
-    algorithm_data = {}
-    for classifier in classifiers:
-        algorithm_data[classifier] = data[(data['algorithm'] == classifier)]
-
-    #print_results(algorithm_data)
 
 
 if __name__ == '__main__':

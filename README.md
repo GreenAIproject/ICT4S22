@@ -20,17 +20,31 @@ $ pip install -r requirements.txt
 $ mkdir output
 ```
 
-3) Execute the experiment script
+3) get and prepare dataset
+
+```
+$ python src/get_data.py
+$ python src/text_preprocessing.py
+```
+
+4) Execute the experiment script
 
 ```
 $ python src/energy_experiment.py
 ```
 
-4) Execute the data analysis script
+**Note:** this step takes a long time because it runs all the energy measurements. If you want to skip this step, you can copy our measurements:
+
+```
+cp data/experiment_data.csv results.csv
+```
+
+5) Execute the data analysis script
 
 ```
 $ python src/analysis.py
 ```
+
 
 Repository Structure
 ---------------
@@ -51,6 +65,8 @@ This is the root directory of the repository. The directory is structured as fol
     └── src
         ├── analysis.py                  Statistical analysis script
         ├── energy_experiment.py         Empirical experiment script
+        ├── get_data.py                  Retrieve dataset from UCI
         ├── modify_dataset.py            Dataset preprocessing script
         ├── text_classification.py       AI classification script
         └── text_preprocessing.py        tf-idf dataset preprocessing
+        

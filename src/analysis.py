@@ -24,7 +24,7 @@ def setup_plot_format():
 
 def load_results():
     results = []
-    with open('results-2021-12-18.csv', 'r', newline='\n') as csvfile:
+    with open('results.csv', 'r', newline='\n') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         for reader_row in reader:
             results.append(reader_row)
@@ -237,7 +237,7 @@ def main():
         'Bagging Classifier',
     ]
 
-    data = pd.read_csv('results-2021-12-18.csv')
+    data = pd.read_csv('results.csv')
     
     
     #groups = remove_outliers(data)
